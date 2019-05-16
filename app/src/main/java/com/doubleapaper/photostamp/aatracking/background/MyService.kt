@@ -9,6 +9,7 @@ import com.firebase.jobdispatcher.JobParameters
 import com.firebase.jobdispatcher.JobService
 
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 class MyService : JobService() {
@@ -30,17 +31,16 @@ class MyService : JobService() {
     override fun onStartJob(job: JobParameters): Boolean {
         var buddle = job.extras
         mContext = applicationContext
-        val currentDateTime = DateFormat.getDateTimeInstance().format(Date())
+        val currentDateTime =  SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
         sent_time = ""+(System.currentTimeMillis())
         date_time = currentDateTime
         if (buddle != null) {
             imei = buddle.getString("imei","no")
         }
         Log.i("joke", "timestamp $currentDateTime "  +imei)
-
-        GetLocation.getInstance().startLocation(date_time, sent_time, imei)
         val notificationHelper = NotificationHelper(mContext)
         notificationHelper.createNotification("Tracking", "Runtime $date_time")
+        GetLocation.getInstance().startLocation(date_time, sent_time, imei, "background")
 
         return true
     }

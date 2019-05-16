@@ -18,7 +18,7 @@ class MyApplication:Application() {
         Realm.init(this)
         val config = RealmConfiguration.Builder()
             .name("aatracking.realm")
-            .schemaVersion(1)
+            .schemaVersion(2)
             .deleteRealmIfMigrationNeeded()
             .build()
         Realm.getInstance(config)
