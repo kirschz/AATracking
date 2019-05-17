@@ -12,7 +12,7 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 class CallService {
-    private val URL = "/"
+    private val URL = ""
     internal var retrofit: Retrofit
 
     constructor() {
@@ -24,10 +24,10 @@ class CallService {
 
     interface SaveTrackingDataService {
         @POST("SaveTrackingData")
-        fun SaveTrackingDataS(@Body saveTracking: SaveTracking): Call<ServiceResponse>
+        fun SaveTrackingData(@Body saveTracking: SaveTracking): Call<ServiceResponse>
     }
     interface SaveMobileDataService {
         @POST("SaveMobileData")
-        fun GetTruckActivityActive(@Body saveMobile: SaveMobile): Call<ServiceResponse>
+        fun SaveMobileData(@Body saveMobile: SaveMobile): Call<ServiceResponse>
     }
 }

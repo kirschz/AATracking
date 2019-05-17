@@ -11,11 +11,15 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.view.get
 import com.doubleapaper.photostamp.aatracking.R
 import com.doubleapaper.photostamp.aatracking.manager.PrefManage
+import com.doubleapaper.photostamp.aatracking.utils.Utils
 import com.google.android.gms.plus.PlusOneButton
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_login.*
+import cn.pedant.SweetAlert.SweetAlertDialog
+
 
 
 
@@ -48,16 +52,21 @@ class LoginFragment : Fragment() {
         val userAction = arguments!!.getString("userAction", "")
         if ( PrefManage.getInstance().getUserName() != "")
             editTextUser.setText(PrefManage.getInstance().getUserName())
-        Log.i("joke","userAction $userAction")
+
         mPlusOneButton = view.findViewById(R.id.buttonOk)
         mPlusOneButton.setOnClickListener(View.OnClickListener {
             if (editTextUser.text.toString() != ""){
                 PrefManage.getInstance().setUserName(editTextUser.text.toString())
                 editTextUser.isEnabled = false
-                Toast.makeText(context!!.applicationContext, "OK", Toast.LENGTH_SHORT).show()
+                SweetAlertDialog(context, SweetAlertDialog.SUCCESS_TYPE)
+                    .setTitleText(android.R.string.ok)
+                    .setContentText(editTextUser.text.toString())
+                    .show()
             }else
                 Toast.makeText(context!!.applicationContext, "Input User", Toast.LENGTH_SHORT).show()
         })
+
+        Utils.startPowerSaverIntent(container!! .context)
         return view
     }
 

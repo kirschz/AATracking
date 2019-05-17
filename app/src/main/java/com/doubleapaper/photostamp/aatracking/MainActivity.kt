@@ -1,6 +1,7 @@
 package com.doubleapaper.photostamp.aatracking
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -23,14 +24,20 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import java.util.concurrent.TimeUnit
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import android.provider.Settings
 import android.telephony.TelephonyManager
+import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Observer
+import cn.pedant.SweetAlert.SweetAlertDialog
+import com.doubleapaper.photostamp.aatracking.background.GetLocation
 import com.doubleapaper.photostamp.aatracking.background.PhotoUploadWorker
 import com.doubleapaper.photostamp.aatracking.dao.SaveMobile
 import com.doubleapaper.photostamp.aatracking.dao.ServiceResponse
@@ -39,6 +46,8 @@ import com.doubleapaper.photostamp.aatracking.fragment.LoginFragment
 import com.doubleapaper.photostamp.aatracking.fragment.MainFragment
 import com.doubleapaper.photostamp.aatracking.manager.PrefManage
 import com.doubleapaper.photostamp.aatracking.service.CallService
+import com.doubleapaper.photostamp.aatracking.utils.Constants
+import com.doubleapaper.photostamp.aatracking.utils.Utils
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.iid.FirebaseInstanceId
@@ -50,6 +59,8 @@ import io.realm.Case
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.IOException
+import java.lang.reflect.InvocationTargetException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -137,6 +148,7 @@ class MainActivity : AppCompatActivity() {
                     locationState.locationServicesEnabled(),
                     Build.MODEL,token,userAction,UserID)
                 sendDataToServer(saveMobile)
+
             })
 
         val data = Data.Builder()
@@ -148,11 +160,25 @@ class MainActivity : AppCompatActivity() {
             .build()
         fab.setOnClickListener { view ->
             if (PrefManage.getInstance().getUserName() != "") {
+                if (saveMobile.imei == "imeino" || saveMobile.imei ==""){
+                    SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
+                        .setTitleText("No IMEI")
+                        .setContentText("App can't get IMEI!")
+                        .setConfirmText("Ok, Try again !")
+                        .setConfirmClickListener {
+                            val intent = packageManager.getLaunchIntentForPackage(packageName)
+                            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+                            startActivity(intent)
+                            finish()
+                        }
+                        .show()
+                }else{
                 startWorker(periodicRequest)
-                saveMobile = SaveMobile(SimpleDateFormat("yyyy-MM-dd").format(Date()),
+                saveMobile = SaveMobile(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date()),
                     Build.VERSION.SDK_INT,
                     BuildConfig.VERSION_NAME,
-                    s1, locationState.isAnyProviderAvailable(),
+                    s1,
+                    locationState.isAnyProviderAvailable(),
                     locationState.isNetworkAvailable(),
                     locationState.isPassiveAvailable(),
                     locationState.isGpsAvailable(),
@@ -163,6 +189,7 @@ class MainActivity : AppCompatActivity() {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
                 finish()
+                }
             } else  Toast.makeText(this, "Input User", Toast.LENGTH_SHORT).show()
         }
 
@@ -179,34 +206,35 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
-
+        GetLocation.getInstance().startLocation(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date()), ""+(System.currentTimeMillis()), s1, "foreground")
         manager = supportFragmentManager
         manager.beginTransaction().replace(R.id.contentContainer, fragment).commit()
     }
     private fun startWorker( periodicRequest:PeriodicWorkRequest){
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
 
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-
-       /* val oneTimeRequest = OneTimeWorkRequest.Builder(PhotoUploadWorker::class.java)
+            /* val oneTimeRequest = OneTimeWorkRequest.Builder(PhotoUploadWorker::class.java)
             .setInputData(data)
             .setConstraints(constraints.build())
             .addTag("demo")
             .build()*/
-        WorkManager.getInstance().getWorkInfoByIdLiveData(periodicRequest.id).observe(this, Observer {
-            if (it != null ) {
-                WorkManager.getInstance().cancelWorkById(periodicRequest.id)
-                Log.i("joke","stop work " + periodicRequest.id)
-            }
-        })
-       Toast.makeText(this, "Starting worker", Toast.LENGTH_SHORT).show()
-       WorkManager.getInstance().enqueueUniquePeriodicWork("DAA1991", ExistingPeriodicWorkPolicy.KEEP, periodicRequest)
+            WorkManager.getInstance().getWorkInfoByIdLiveData(periodicRequest.id).observe(this, Observer {
+                if (it != null) {
+                    WorkManager.getInstance().cancelWorkById(periodicRequest.id)
+                    Log.i("joke", "stop work " + periodicRequest.id)
+                }
+            })
+            Toast.makeText(this, "Starting worker", Toast.LENGTH_SHORT).show()
+            WorkManager.getInstance()
+                .enqueueUniquePeriodicWork("DAA1991", ExistingPeriodicWorkPolicy.KEEP, periodicRequest)
+
 
     }
     fun sendDataToServer(saveMobile: SaveMobile) {
         var server: CallService.SaveMobileDataService =  CallService().retrofit.create(CallService.SaveMobileDataService::class.java)
 
-        val call = server.GetTruckActivityActive(saveMobile)
+        val call = server.SaveMobileData(saveMobile)
         call.enqueue(object : Callback<ServiceResponse> {
             override fun onResponse(
                 call: Call<ServiceResponse>,
@@ -242,4 +270,6 @@ class MainActivity : AppCompatActivity() {
         manager.beginTransaction().replace(R.id.contentContainer, fragment).commit()
         return true
     }
+
+
 }

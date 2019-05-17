@@ -59,27 +59,8 @@ class GetLocation  private constructor() {
     private fun showLocation(location: Location?, dateStamp:String, timestamp:String, imei:String, from:String) {
         var address =""
         if (location != null) {
-            /*try {
-                SmartLocation.with(mContext).geocoding().reverse(
-                    location
-                ) { original, results ->
-                    if (results.size > 0) {
-                        val result = results[0]
-                        val builder = StringBuilder()
-                        builder.append("")
-                        val addressElements = ArrayList<String>()
-                        for (i in 0..result.maxAddressLineIndex) {
-                            addressElements.add(result.getAddressLine(i))
-                            Log.i("joke", "result.getAddressLine(i)" + result.getAddressLine(i))
-                        }
-                        builder.append(TextUtils.join(", ", addressElements))
-                        address = builder.toString()
-                        Log.i("joke", "show addresscation " + builder.toString())
-                    }
-                }
-            }catch (e:Exception){
-                address = "Error:${e.message}"
-            }*/
+
+
             var gps = GPSStamp()
             gps.datestamp = dateStamp
             gps.timestamp = java.lang.Long.parseLong(timestamp)
@@ -88,7 +69,8 @@ class GetLocation  private constructor() {
             loc.lng = location.longitude
             gps.location = loc
             gps.iMEI=imei
-            gps.address = from + address
+            gps.address = address
+            gps.fromService = from
             RealmManager.getInstance().inserGPS(gps)
 
             val database = FirebaseDatabase.getInstance()
@@ -101,10 +83,38 @@ class GetLocation  private constructor() {
             myGPs.setValue(location.latitude.toString() + ", " + location.longitude)
             myMessage.setValue(dateStamp)
             myAddress.setValue(address + from)
-            var tracking =SaveTracking("",
+            var tracking = SaveTracking(address,
                 com.doubleapaper.photostamp.aatracking.BuildConfig.VERSION_NAME,dateStamp,from,imei,location.latitude, location.longitude,"" , java.lang.Long.parseLong(timestamp),PrefManage.getInstance().getUserName())
-            sendDataToServer(tracking,gps)
-            Log.i("joke", "showLocation " +gps.toString())
+
+            if (from == "foreground"){
+                try {
+                    SmartLocation.with(mContext).geocoding().reverse(
+                        location
+                    ) { original, results ->
+                        if (results.size > 0) {
+                            val result = results[0]
+                            val builder = StringBuilder()
+                            builder.append("")
+                            val addressElements = ArrayList<String>()
+                            for (i in 0..result.maxAddressLineIndex) {
+                                addressElements.add(result.getAddressLine(i))
+                            }
+                            builder.append(TextUtils.join(", ", addressElements))
+                            address = builder.toString()
+                            tracking.addressName = address
+                            sendDataToServer(tracking,gps)
+                        }else {
+                            sendDataToServer(tracking,gps)
+                        }
+                    }
+                }catch (e:Exception){
+                    address = "Error:${e.message}"
+                }
+            }else {
+                sendDataToServer(tracking,gps)
+            }
+
+
             SmartLocation.with(mContext).location().stop()
             // val mBuilder = NotificationCompat.Builder(applicationContext)
             // mBuilder.setOngoing(true)
@@ -115,7 +125,7 @@ class GetLocation  private constructor() {
     fun sendDataToServer(saveTracking: SaveTracking, gps:GPSStamp) {
         var server: CallService.SaveTrackingDataService =  CallService().retrofit.create(CallService.SaveTrackingDataService::class.java)
 
-        val call = server.SaveTrackingDataS(saveTracking)
+        val call = server.SaveTrackingData(saveTracking)
         call.enqueue(object : Callback<ServiceResponse> {
             override fun onResponse(
                 call: Call<ServiceResponse>,
@@ -124,8 +134,6 @@ class GetLocation  private constructor() {
                 if (response.isSuccessful()) {
                     var result = response.body()
                     RealmManager.getInstance().updateGPSStamp(gps,result?.status!!)
-                    Log.i("joke","saveTracking ${saveTracking.toString()}")
-                    Log.i("joke","response ${result.message}")
                 }
             }
 

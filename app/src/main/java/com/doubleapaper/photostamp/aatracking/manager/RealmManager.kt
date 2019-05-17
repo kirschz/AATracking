@@ -35,6 +35,7 @@ class RealmManager private constructor() {
         gps.datestamp = gpsStamp.datestamp;
         gps.iMEI = gpsStamp.iMEI;
         gps.address = gpsStamp.address
+        gps.fromService = gpsStamp.fromService
         var loc = realm.createObject(LocationTracking::class.java)
         loc.lat = gpsStamp.location!!.lat
         loc.lng = gpsStamp.location!!.lng

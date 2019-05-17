@@ -32,7 +32,6 @@ class FirebaseBackgroundService : BroadcastReceiver() {
                         imei = tel.deviceId
                     var currentDateTime =  SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
                     var sent_time = ""+(System.currentTimeMillis())
-                    Log.i("joke", "timestampbg $currentDateTime "  +imei)
 
                     GetLocation.getInstance().startLocation(currentDateTime, sent_time, imei,"notification")
                 }

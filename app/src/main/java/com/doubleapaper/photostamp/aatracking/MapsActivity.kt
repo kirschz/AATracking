@@ -17,7 +17,7 @@ import io.realm.Sort
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-import android.R
+
 import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
@@ -79,7 +79,7 @@ class MapsActivity : Fragment(), OnMapReadyCallback {
             markers.add(marker)
         }
 
-        val polygon = mMap.addPolygon(opts.strokeColor(Color.RED).fillColor(Color.BLUE))
+        val polygon = mMap.addPolygon(opts.strokeColor(Color.RED))
 
         // Add a marker in Sydney and move the camera
         val sydney = LatLng(gps[0].location!!.lat, gps[0].location!!.lng)

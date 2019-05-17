@@ -24,7 +24,7 @@ class MyService : JobService() {
           //  imei = buddle.getString("imei","no")
 
         }
-        Log.i("joke","stop job")
+
         return false
     }
 
@@ -37,7 +37,7 @@ class MyService : JobService() {
         if (buddle != null) {
             imei = buddle.getString("imei","no")
         }
-        Log.i("joke", "timestamp $currentDateTime "  +imei)
+
         val notificationHelper = NotificationHelper(mContext)
         notificationHelper.createNotification("Tracking", "Runtime $date_time")
         GetLocation.getInstance().startLocation(date_time, sent_time, imei, "background")

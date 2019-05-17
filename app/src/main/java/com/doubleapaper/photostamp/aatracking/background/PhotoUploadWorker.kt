@@ -27,7 +27,7 @@ class PhotoUploadWorker(private val mContext: Context, workerParameters: WorkerP
         val currentDateTime = DateFormat.getDateTimeInstance().format(Date())
         sent_time = ""+(System.currentTimeMillis())
         date_time = currentDateTime
-        Log.i("joke","doWork $filePath $currentDateTime")
+
 
         return try {
             val dispatcher = FirebaseJobDispatcher( GooglePlayDriver(mContext))
